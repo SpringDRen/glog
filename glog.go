@@ -98,7 +98,7 @@ type severity int32 // sync/atomic int32
 // A message written to a high-severity log file is also written to each
 // lower-severity log file.
 const (
-	infoLog severity = iota
+	infoLog     severity = iota
 	warningLog
 	errorLog
 	fatalLog
@@ -562,7 +562,11 @@ func (l *loggingT) formatHeader(s severity, file string, line int) *buffer {
 	_, month, day := now.Date()
 	hour, minute, second := now.Clock()
 	// Lmmdd hh:mm:ss.uuuuuu threadid file:line]
-	buf.tmp[0] = severityChar[s]
+	// use severityName
+	buf.WriteString("[ ")
+	buf.WriteString(severityName[s])
+	//buf.tmp[0] = severityChar[s]
+	buf.tmp[0] = ' '
 	buf.twoDigits(1, int(month))
 	buf.twoDigits(3, day)
 	buf.tmp[5] = ' '
@@ -574,15 +578,18 @@ func (l *loggingT) formatHeader(s severity, file string, line int) *buffer {
 	buf.tmp[14] = '.'
 	buf.nDigits(6, 15, now.Nanosecond()/1000, '0')
 	buf.tmp[21] = ' '
-	buf.nDigits(7, 22, pid, ' ') // TODO: should be TID
-	buf.tmp[29] = ' '
-	buf.Write(buf.tmp[:30])
+	// remove pid
+	//buf.nDigits(7, 22, pid, ' ') // TODO: should be TID
+	//buf.tmp[29] = ' '
+	buf.Write(buf.tmp[:22])
 	buf.WriteString(file)
 	buf.tmp[0] = ':'
 	n := buf.someDigits(1, line)
-	buf.tmp[n+1] = ']'
-	buf.tmp[n+2] = ' '
-	buf.Write(buf.tmp[:n+3])
+	// add a blank after line
+	buf.tmp[n+1] = ' '
+	buf.tmp[n+2] = ']'
+	buf.tmp[n+3] = ' '
+	buf.Write(buf.tmp[:n+4])
 	return buf
 }
 
@@ -875,7 +882,9 @@ func (l *loggingT) createFiles(sev severity) error {
 	return nil
 }
 
-const flushInterval = 30 * time.Second
+// const flushInterval = 30 * time.Second
+// accelerate flush speed
+const flushInterval = 1 * time.Second
 
 // flushDaemon periodically flushes the log file buffers.
 func (l *loggingT) flushDaemon() {
