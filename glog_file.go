@@ -31,17 +31,26 @@ import (
 )
 
 // MaxSize is the maximum size of a log file in bytes.
-var MaxSize uint64 = 1024 * 1024 * 1800
+//var MaxSize uint64 = 1024 * 1024 * 1800
+// reduce max file size
+var MaxSize uint64 = 1024 * 1024 * 512
 
 // logDirs lists the candidate directories for new log files.
 var logDirs []string
 
 // If non-empty, overrides the choice of directory in which to write logs.
 // See createLogDirs for the full list of possible destinations.
-var logDir = flag.String("log_dir", "", "If non-empty, write log files in this directory")
+//var logDir = flag.String("log_dir", "", "If non-empty, write log files in this directory")
+// change default log_dir to ./logs
+var logDir = flag.String("log_dir", "./logs", "If non-empty, write log files in this directory")
 
 func createLogDirs() {
 	if *logDir != "" {
+		// If logDir doesn't exist, try to create it.
+		if _, err := os.Stat(*logDir); os.IsNotExist(err) {
+			// ignore the error
+			os.MkdirAll(*logDir, os.ModeDir)
+		}
 		logDirs = append(logDirs, *logDir)
 	}
 	logDirs = append(logDirs, os.TempDir())
@@ -81,18 +90,28 @@ func shortHostname(hostname string) string {
 // logName returns a new log file name containing tag, with start time t, and
 // the name for the symlink for tag.
 func logName(tag string, t time.Time) (name, link string) {
-	name = fmt.Sprintf("%s.%s.%s.log.%s.%04d%02d%02d-%02d%02d%02d.%d",
+	//name = fmt.Sprintf("%s.%s.%s.log.%s.%04d%02d%02d-%02d%02d%02d.%d",
+	//	program,
+	//	host,
+	//	userName,
+	//	tag,
+	//	t.Year(),
+	//	t.Month(),
+	//	t.Day(),
+	//	t.Hour(),
+	//	t.Minute(),
+	//	t.Second(),
+	//	pid)
+	// remove host、userName、pid
+	name = fmt.Sprintf("%s.log.%s.%04d%02d%02d-%02d%02d%02d",
 		program,
-		host,
-		userName,
 		tag,
 		t.Year(),
 		t.Month(),
 		t.Day(),
 		t.Hour(),
 		t.Minute(),
-		t.Second(),
-		pid)
+		t.Second())
 	return name, program + "." + tag
 }
 
