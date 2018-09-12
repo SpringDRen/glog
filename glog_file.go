@@ -49,7 +49,7 @@ func createLogDirs() {
 		// If logDir doesn't exist, try to create it.
 		if _, err := os.Stat(*logDir); os.IsNotExist(err) {
 			// ignore the error
-			os.MkdirAll(*logDir, os.ModeDir)
+			os.MkdirAll(*logDir, os.ModePerm)
 		}
 		logDirs = append(logDirs, *logDir)
 	}
